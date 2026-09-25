@@ -249,14 +249,15 @@ class LoginWindow:
     def __init__(self, root, on_success):
         self.root = root
         self.on_success = on_success
-        self.root.title("Bluetech Computers - Login")
-        self.root.geometry("430x390")
-        self.root.resizable(False, False)
-        self.root.configure(bg="#F3F7FC")
-        self.root.protocol("WM_DELETE_WINDOW", self.close)
-        set_app_icon(self.root)
+        self.win = tk.Toplevel(root)
+        self.win.title("Bluetech Computers - Login")
+        self.win.geometry("430x390")
+        self.win.resizable(False, False)
+        self.win.configure(bg="#F3F7FC")
+        self.win.protocol("WM_DELETE_WINDOW", self.close)
+        set_app_icon(self.win)
 
-        outer = tk.Frame(self.root, bg="#F3F7FC")
+        outer = tk.Frame(self.win, bg="#F3F7FC")
         outer.pack(fill="both", expand=True, padx=28, pady=24)
         card = tk.Frame(outer, bg="white", highlightbackground="#B9D7EF", highlightthickness=1)
         card.pack(fill="both", expand=True)
@@ -292,7 +293,13 @@ class LoginWindow:
 
         self.username_entry.bind("<Return>", lambda e: self.password_entry.focus_set())
         self.password_entry.bind("<Return>", lambda e: self.login())
+        self.win.transient(root)
+        self.win.grab_set()
         self.username_entry.focus_set()
+        self.win.update_idletasks()
+        x=(self.win.winfo_screenwidth()-self.win.winfo_width())//2
+        y=(self.win.winfo_screenheight()-self.win.winfo_height())//2
+        self.win.geometry(f"+{x}+{y}")
 
     def login(self):
         username=self.username.get().strip()
@@ -310,10 +317,13 @@ class LoginWindow:
             self.status.configure(text="Invalid username or password.")
             self.password_entry.focus_set()
             return
-        self.root.protocol("WM_DELETE_WINDOW", self.root.destroy)
+        self.win.grab_release()
+        self.win.destroy()
         self.on_success(username)
 
     def close(self):
+        try: self.win.grab_release()
+        except Exception: pass
         self.root.destroy()
 
 
@@ -324,6 +334,10 @@ class App:
         set_app_icon(self.root)
         self.root.geometry("1320x800")
         self.root.minsize(1000, 560)
+        try:
+            self.root.state("zoomed")
+        except Exception:
+            pass
         self.rows = []
         self.editing_id = None
         setup_db(db)
@@ -1570,7 +1584,21 @@ class App:
         body_canvas.configure(yscrollcommand=body_scroll.set)
         body_canvas.pack(side="left", fill="both", expand=True)
         body_scroll.pack(side="right", fill="y")
-        body_canvas.bind_all("<MouseWheel>", lambda e: body_canvas.yview_scroll(int(-e.delta/120), "units"))
+        def invoice_mousewheel(event):
+            try:
+                body_canvas.yview_scroll(int(-event.delta / 120), "units")
+            except tk.TclError:
+                pass
+            return "break"
+
+        def cleanup_invoice_mousewheel(_event=None):
+            try:
+                body_canvas.unbind_all("<MouseWheel>")
+            except Exception:
+                pass
+
+        body_canvas.bind_all("<MouseWheel>", invoice_mousewheel)
+        win.bind("<Destroy>", cleanup_invoice_mousewheel, add="+")
 
         payment_box = ttk.LabelFrame(body, text="Payment Breakdown", padding=6)
         payment_box.pack(fill="x", padx=4, pady=4)
@@ -2288,11 +2316,11 @@ class App:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.withdraw()
     set_app_icon(root)
 
     def start_app(_username):
-        for w in root.winfo_children():
-            w.destroy()
+        root.deiconify()
         App(root)
 
     LoginWindow(root, start_app)
