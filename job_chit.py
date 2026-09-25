@@ -68,9 +68,14 @@ def open_job_chit(app, db, get_pdf_dir, job_id=None):
     body.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
     canvas.bind('<Configure>', lambda e: canvas.itemconfigure(canvas_window, width=e.width))
     def wheel(e):
-        canvas.yview_scroll(int(-e.delta/120), 'units')
-    canvas.bind('<Enter>', lambda e: canvas.bind_all('<MouseWheel>', wheel))
-    canvas.bind('<Leave>', lambda e: canvas.unbind_all('<MouseWheel>'))
+        try:
+            canvas.yview_scroll(int(-e.delta/120), 'units')
+        except tk.TclError:
+            pass
+        return 'break'
+    # Bind only to this Job Chit window. Do not use bind_all/unbind_all,
+    # because that can remove the quotation page's mouse-wheel binding.
+    win.bind('<MouseWheel>', wheel, add='+')
 
     if saved:
         jid, number, qid, qno, customer, phone, created, due, status, itemjson, checkjson, staffjson, timejson, notes = saved
