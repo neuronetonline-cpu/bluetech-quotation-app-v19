@@ -54,6 +54,7 @@ def resource_path(name):
 
 
 def set_app_icon(root):
+    """Apply the bundled Bluetech logo as the application icon."""
     icon_path = resource_path("BluetechComputers.ico")
     if os.path.exists(icon_path):
         try:
@@ -248,89 +249,71 @@ class LoginWindow:
     def __init__(self, root, on_success):
         self.root = root
         self.on_success = on_success
-        self.win = tk.Toplevel(root)
-        self.win.title("Bluetech Computers - Login")
-        self.win.geometry("430x390")
-        self.win.resizable(False, False)
-        self.win.configure(bg="#F3F7FC")
-        self.win.protocol("WM_DELETE_WINDOW", self.close)
-        set_app_icon(self.win)
+        self.root.title("Bluetech Computers - Login")
+        self.root.geometry("430x390")
+        self.root.resizable(False, False)
+        self.root.configure(bg="#F3F7FC")
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
+        set_app_icon(self.root)
 
-        outer = tk.Frame(self.win, bg="#F3F7FC")
+        outer = tk.Frame(self.root, bg="#F3F7FC")
         outer.pack(fill="both", expand=True, padx=28, pady=24)
         card = tk.Frame(outer, bg="white", highlightbackground="#B9D7EF", highlightthickness=1)
         card.pack(fill="both", expand=True)
 
         top = tk.Frame(card, bg="#075EAA", height=105)
-        top.pack(fill="x"); top.pack_propagate(False)
-        tk.Label(top, text="BLUETECH", bg="#075EAA", fg="#62D3FF",
-                 font=("Segoe UI", 24, "bold")).pack(pady=(18, 0))
-        tk.Label(top, text="COMPUTERS", bg="#075EAA", fg="white",
-                 font=("Segoe UI", 15, "bold")).pack()
+        top.pack(fill="x")
+        top.pack_propagate(False)
+        tk.Label(top, text="BLUETECH", bg="#075EAA", fg="#62D3FF", font=("Segoe UI", 24, "bold")).pack(pady=(18, 0))
+        tk.Label(top, text="COMPUTERS", bg="#075EAA", fg="white", font=("Segoe UI", 15, "bold")).pack()
 
         body = tk.Frame(card, bg="white")
         body.pack(fill="both", expand=True, padx=30, pady=20)
-        tk.Label(body, text="USER LOGIN", bg="white", fg="#17324D",
-                 font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(0, 12))
-
-        tk.Label(body, text="USERNAME", bg="white", fg="#667085",
-                 font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        tk.Label(body, text="USER LOGIN", bg="white", fg="#17324D", font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(0, 12))
+        tk.Label(body, text="USERNAME", bg="white", fg="#667085", font=("Segoe UI", 8, "bold")).pack(anchor="w")
         self.username = tk.StringVar()
         self.username_entry = ttk.Entry(body, textvariable=self.username)
         self.username_entry.pack(fill="x", pady=(4, 10), ipady=4)
-
-        tk.Label(body, text="PASSWORD", bg="white", fg="#667085",
-                 font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        tk.Label(body, text="PASSWORD", bg="white", fg="#667085", font=("Segoe UI", 8, "bold")).pack(anchor="w")
         self.password = tk.StringVar()
         self.password_entry = ttk.Entry(body, textvariable=self.password, show="*")
         self.password_entry.pack(fill="x", pady=(4, 12), ipady=4)
-
-        self.status = tk.Label(body, text="", bg="white", fg="#D92D20",
-                               font=("Segoe UI", 8))
+        self.status = tk.Label(body, text="", bg="white", fg="#D92D20", font=("Segoe UI", 8))
         self.status.pack(anchor="w")
 
         buttons = tk.Frame(body, bg="white")
         buttons.pack(fill="x", pady=(10, 0))
         tk.Button(buttons, text="LOGIN", command=self.login, bg="#0878D1", fg="white",
-                  activebackground="#0565B3", activeforeground="white",
-                  font=("Segoe UI", 9, "bold"), relief="flat", padx=18, pady=8,
-                  cursor="hand2").pack(side="left", fill="x", expand=True, padx=(0,5))
+                  activebackground="#0565B3", activeforeground="white", font=("Segoe UI", 9, "bold"),
+                  relief="flat", padx=18, pady=8, cursor="hand2").pack(side="left", fill="x", expand=True, padx=(0, 5))
         tk.Button(buttons, text="EXIT", command=self.close, bg="#E7EEF5", fg="#17324D",
-                  activebackground="#D7E4F0", activeforeground="#17324D",
-                  font=("Segoe UI", 9, "bold"), relief="flat", padx=18, pady=8,
-                  cursor="hand2").pack(side="left", fill="x", expand=True, padx=(5,0))
+                  activebackground="#D7E4F0", activeforeground="#17324D", font=("Segoe UI", 9, "bold"),
+                  relief="flat", padx=18, pady=8, cursor="hand2").pack(side="left", fill="x", expand=True, padx=(5, 0))
 
         self.username_entry.bind("<Return>", lambda e: self.password_entry.focus_set())
         self.password_entry.bind("<Return>", lambda e: self.login())
-        self.win.transient(root)
-        self.win.grab_set()
         self.username_entry.focus_set()
 
     def login(self):
-        username = self.username.get().strip()
-        password = self.password.get()
+        username=self.username.get().strip()
+        password=self.password.get()
         if not username or not password:
-            self.status.config(text="Enter username and password.")
+            self.status.configure(text="Enter username and password.")
             return
-        ph = hashlib.sha256(password.encode("utf-8")).hexdigest()
-        con = db()
-        row = con.execute(
-            "SELECT id FROM login_users WHERE username=? AND password_hash=? AND active=1",
-            (username, ph)
-        ).fetchone()
-        con.close()
+        password_hash=hashlib.sha256(password.encode("utf-8")).hexdigest()
+        c=db()
+        row=c.execute("SELECT id FROM login_users WHERE username=? AND password_hash=? AND active=1",
+                      (username,password_hash)).fetchone()
+        c.close()
         if not row:
             self.password.set("")
-            self.status.config(text="Invalid username or password.")
+            self.status.configure(text="Invalid username or password.")
             self.password_entry.focus_set()
             return
-        self.win.grab_release()
-        self.win.destroy()
+        self.root.protocol("WM_DELETE_WINDOW", self.root.destroy)
         self.on_success(username)
 
     def close(self):
-        try: self.win.grab_release()
-        except Exception: pass
         self.root.destroy()
 
 
@@ -394,7 +377,6 @@ class App:
         # Keep the header fixed. Everything below it scrolls together with the
         # scrollbar on the far right of the application window.
         main_area = tk.Frame(self.root, bg="#F3F7FC")
-        self.main_area = main_area
         main_area.pack(fill="both", expand=True)
 
         self.page_canvas = tk.Canvas(main_area, bg="#F3F7FC", highlightthickness=0, bd=0)
@@ -2306,11 +2288,11 @@ class App:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.withdraw()
     set_app_icon(root)
 
     def start_app(_username):
-        root.deiconify()
+        for w in root.winfo_children():
+            w.destroy()
         App(root)
 
     LoginWindow(root, start_app)
