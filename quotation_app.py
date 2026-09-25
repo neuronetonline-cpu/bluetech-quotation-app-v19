@@ -4,6 +4,7 @@ import subprocess
 import sys
 import webbrowser
 import hashlib
+import traceback
 from job_chit import open_job_chit, show_job_history, setup_db
 from datetime import datetime
 from urllib.parse import quote
@@ -1596,7 +1597,7 @@ class App:
 
         def cleanup_invoice_mousewheel(_event=None):
             try:
-                body_canvas.unbind_all("<MouseWheel>")
+                win.unbind("<MouseWheel>")
             except Exception:
                 pass
 
@@ -2321,14 +2322,41 @@ class App:
         self.whatsapp_quotation()
 
 
+def write_startup_error(exc):
+    try:
+        log_path = os.path.join(APP_DIR, "startup_error.log")
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write("\n" + "=" * 80 + "\n")
+            f.write(datetime.now().isoformat() + "\n")
+            traceback.print_exc(file=f)
+        return log_path
+    except Exception:
+        return ""
+
+
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.withdraw()
-    set_app_icon(root)
+    root = None
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        set_app_icon(root)
 
-    def start_app(_username):
-        root.deiconify()
-        App(root)
+        def start_app(_username):
+            root.deiconify()
+            App(root)
 
-    LoginWindow(root, start_app)
-    root.mainloop()
+        LoginWindow(root, start_app)
+        root.mainloop()
+    except Exception as exc:
+        log_path = write_startup_error(exc)
+        if root is not None:
+            try:
+                root.deiconify()
+                messagebox.showerror(
+                    "Bluetech Quotation - Startup Error",
+                    "The application could not start.\n\n"
+                    + str(exc)
+                    + (f"\n\nError log:\n{log_path}" if log_path else "")
+                )
+            except Exception:
+                pass
