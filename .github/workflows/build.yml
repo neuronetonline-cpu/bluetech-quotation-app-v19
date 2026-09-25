@@ -22,7 +22,7 @@ jobs:
           pip install pyinstaller
       - name: Build EXE
         run: |
-          pyinstaller --onefile --windowed --icon "BluetechComputers.ico" --add-data "Deadly Advance.ttf;." --name BluetechQuotation quotation_app.py
+          pyinstaller --onefile --console --icon "BluetechComputers.ico" --add-data "Deadly Advance.ttf;." --name BluetechQuotation quotation_app.py
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
